@@ -1,0 +1,2 @@
+
+// const viewAllPost =(data1)=>{
