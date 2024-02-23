@@ -6,8 +6,11 @@ document.addEventListener("DOMContentLoaded", function() {
         history.pushState({section: section}, "", `${section}`);
         get_post(section);
     };
+
+   
     // get_post('AllPost');
-    get_post(getPath());
+    // get_post(getPath());
+    fetchData(1)
 });
 
 document.querySelector("#posts-form").addEventListener("submit", (event) => {event.preventDefault(); sendPost();});
@@ -40,14 +43,11 @@ function get_post(title) {
     alert.style.display = "block";
     alert.innerHTML=`<p class="alert alert-warning>${post.error}</p>`
   }
-  console.log("aaa",page_obj)
-  // let data = JSON.parse(post);
-  // console.log("s",post)
-  // viewAllPost(data);
+    viewAllPost(post);
+    console.log(post)
  
  })
  .catch((error) => {
-  console.log("aaa")
      console.log(error);
  });
   }
@@ -423,6 +423,73 @@ data.forEach((item) => {
 }
 
 
+// function fetchData(page) {
+//   console.log(page)
+//   fetch(`/view/${page}`) // Replace with your pagination endpoint
+
+//    .then(response => {
+
+//           if (!response.ok) {
+//               throw new Error('Network response was not ok');
+//           }
+
+//           return response.json();
+          
+//       })
+//       .then(data => {
+//         console.log("dat")
+//           // Update data container with received data
+//           // document.getElementById('data-container').innerText = JSON.stringify(data.data);
+          
+//           // Update pagination links if needed
+//           // You can use data.count, data.num_pages, and data.page_number to build pagination links
+//           // document.getElementById('pagination-container').innerText =`<a class="pagination-link">${data.page_number} </a>`;
+//       })
+//       .catch(error => {
+//           console.error('Error:', error);
+//       });
+// }
+
+// Initial fetch for first page
+// fetchData(1);
+
+// Example: Adding event listener to pagination links
+// document.addEventListener('click', function(event) {
+//   if (event.target.matches('.pagination-link')) {
+//       event.preventDefault();
+//       var page = event.target.dataset.page;
+//       fetchData(page);
+//   }
+// });
 
 
 
+
+function fetchData(page) {
+  // document.querySelector("#userDatiles").style.display='none'
+  // if (title =="Profile"){
+  //   let username=document.querySelector("#username") 
+  //   username=username.innerHTML
+  //   user=userid.value
+  //   usersProfile(user,username) 
+  // }else{
+
+  // document.querySelector("#page-title").innerHTML =title 
+  // document.querySelector("title").innerHTML =title ;
+
+ fetch(`/view/${page}`)
+ .then((response) => response.json())
+ .then((post) => {
+  if( post.error){
+    alert=document.querySelector("#alert")
+    alert.style.display = "block";
+    alert.innerHTML=`<p class="alert alert-warning>${post.error}</p>`
+  }
+    viewAllPost(post);
+    console.log(post)
+ 
+ })
+ .catch((error) => {
+     console.log(error);
+ });
+  }

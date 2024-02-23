@@ -14,9 +14,9 @@ from .forms import  profileForm
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-
-
 from django.template import RequestContext
+# from django.core.paginator import Paginator, EmptyPage
+# from django.http import JsonResponse
 
 
 
@@ -27,44 +27,18 @@ from django.template import RequestContext
 def index(request):
     return render(request, "network/index.html")
   
-
-
-def view_post(request,title):
-    data=get_iteams_datile(request,title)
-   
-    paginator = Paginator(data, 10)  # Show 10 contacts per page.
-
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
-    print(page_obj)
-    data_list=json.dumps(page_obj, indent=4, sort_keys=True, default=str)
-    obj=json.dumps(data_list, indent=4, sort_keys=True, default=str)
-    return HttpResponse( {"page_obj": obj})
-    # return render(request, "index.html", {"page_obj": page_obj})
     
 
 
-# @csrf_exempt
-# def view_post(request,title):
-#     if title:
-   
-#         data=get_iteams_datile(request,title)
-     
-#         p = Paginator(data, 10)
-        
-#         # data=json.dumps(page, indent=4, sort_keys=True, default=str)
-#         data_list=json.dumps(data, indent=4, sort_keys=True, default=str)
-#         obj=json.dumps(data_list, indent=4, sort_keys=True, default=str)
-#         # # print(data_list)
-        
-#         # paginator = Paginator(data, 10)
-#         # page_number = request.GET.get('page')
-#         # page_obj = paginator.get_page(page_number)
-#         # return JsonResponse([obj for post in page_obj],safe=False)
-#         # return HttpResponse(page)
-
-#     else:
-#         raise Http404("No such section")
+@csrf_exempt
+def view_post(request,title):
+    if title:
+        data=get_iteams_datile(request,title)
+    
+        data_list=json.dumps(data, indent=4, sort_keys=True, default=str)
+        return HttpResponse(data_list)
+    else:
+        raise Http404("No such section")
     
 
 
@@ -216,7 +190,7 @@ def add_post(request):
     return JsonResponse({"error": "Not Allow."}, status=400)
       
 
-@login_required 
+# @login_required 
 def addBio(request):
     if request.method =='Post':
         form= profileForm(request.Post,request.File)
@@ -288,3 +262,40 @@ def register(request):
 
 
 
+
+
+def paginated_json_view(request,page):
+    data=get_iteams_datile(request,'AllPost')
+    items_per_page = 10
+    # Paginate the data
+    paginator = Paginator(data, items_per_page)
+    page_number=page
+    try:
+        # Get the specified page from the paginator
+        page = paginator.page(page_number)
+        objects = page.object_list
+
+        response_data = {
+            'count': paginator.count,
+            'num_pages': paginator.num_pages,
+            'page_number': page_number,
+            'data': objects,
+        }
+        response_datas=json.dumps(response_data, indent=4, sort_keys=True, default=str)
+        # data_list=json.dumps(serialized_data, indent=4, sort_keys=True, default=str)
+        # return JsonResponse(data_list)
+        return HttpResponse(response_datas)
+    except EmptyPage:
+        # If the requested page is out of range, return an empty array
+        return JsonResponse({'error': 'Page out of range'}, status=404)
+
+
+# def view_post2(request,title):
+#     if title:
+#         data=get_iteams_datile(request,title)
+    
+#         data_list=json.dumps(data, indent=4, sort_keys=True, default=str)
+#         return HttpResponse(data_list)
+#     else:
+#         raise Http404("No such section")
+    

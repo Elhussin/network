@@ -19,5 +19,7 @@ urlpatterns = [
     path("addComment", views.addComment , name="addComment"),
     path("follow/<int:user_id>", views.follow , name="follow"),
     # path('home', views.home, name="home")
-    path("<path:path>", views.hendelPAth, name="hendelPAth")
+    path("<path:path>", views.hendelPAth, name="hendelPAth"),
+    
+    path("view<int:page>", views.paginated_json_view , name="view"),
 ]
