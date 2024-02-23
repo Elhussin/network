@@ -1,10 +1,9 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect,Http404
 from django.shortcuts import render ,redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
-from django.core.serializers import serialize
 from .models import User
 from django.http import JsonResponse
 import json
@@ -16,44 +15,69 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
-# def index(request,):
-#     items=get_iteams_datile(request,'Network')
-#     default_page = 1
-#     page = request.GET.get('page', default_page)
-  
-#     # Paginate items
-#     items_per_page = 10
-#     paginator = Paginator(items, items_per_page)
 
-#     try:
-#         items_page = paginator.page(page)
-#     except PageNotAnInteger:
-#         items_page = paginator.page(default_page)
-#     except EmptyPage:
-#         items_page = paginator.page(paginator.num_pages)
-#     context={}
-#     context["items_page"] = items_page
-#     return render(request, "network/index.html",{'items_page':items_page})
-    
+from django.template import RequestContext
+
+
+
+
 
 
 
 def index(request):
     return render(request, "network/index.html")
+  
 
-@csrf_exempt
+
 def view_post(request,title):
-
     data=get_iteams_datile(request,title)
-    # data= Paginator(data, 5)
-    # obj=json.dumps(data, indent=4, sort_keys=True, default=str)
-    return JsonResponse(data, safe=False)
-    # except :
-    #     return JsonResponse({"error": "Not found."}, status=404)
+   
+    paginator = Paginator(data, 10)  # Show 10 contacts per page.
+
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+    print(page_obj)
+    data_list=json.dumps(page_obj, indent=4, sort_keys=True, default=str)
+    obj=json.dumps(data_list, indent=4, sort_keys=True, default=str)
+    return HttpResponse( {"page_obj": obj})
+    # return render(request, "index.html", {"page_obj": page_obj})
+    
+
 
 # @csrf_exempt
+# def view_post(request,title):
+#     if title:
+   
+#         data=get_iteams_datile(request,title)
+     
+#         p = Paginator(data, 10)
+        
+#         # data=json.dumps(page, indent=4, sort_keys=True, default=str)
+#         data_list=json.dumps(data, indent=4, sort_keys=True, default=str)
+#         obj=json.dumps(data_list, indent=4, sort_keys=True, default=str)
+#         # # print(data_list)
+        
+#         # paginator = Paginator(data, 10)
+#         # page_number = request.GET.get('page')
+#         # page_obj = paginator.get_page(page_number)
+#         # return JsonResponse([obj for post in page_obj],safe=False)
+#         # return HttpResponse(page)
+
+#     else:
+#         raise Http404("No such section")
+    
+
+
+
+# if path not avilbeal will return to  inde
+def hendelPAth(request, path):
+
+      return HttpResponseRedirect(reverse("index"))
+
+
 @login_required
 def add_like(request,post_id):    
+
     data=[]
     try:
         data= Like.objects.get(user=request.user.id, post=post_id)
@@ -66,11 +90,14 @@ def add_like(request,post_id):
                    data.likes = True
                    data.unlikes= False
                 data.save()
-                return JsonResponse({"message": "done"}, status=404)
+                return JsonResponse({"message": "done"}, status=200)
+                # return HttpResponse(request.META.get('HTTP_REFERER'))
+         
     else:
            add = Like.objects.create(user_id =request.user.id,  post_id = post_id, likes = True, unlikes = False )
            add.save()
-           return JsonResponse({"message": "done"}, status=404)
+           return JsonResponse({"message": "done"}, status=200)
+        #    return HttpResponse(request.META.get('HTTP_REFERER'))
 
 @login_required
 def un_like(request,post_id):    
@@ -86,11 +113,11 @@ def un_like(request,post_id):
                 elif data.unlikes == True:
                       data.unlikes =False
                 data.save()
-                return JsonResponse({"message": "done"}, status=404)
+                return JsonResponse({"message": "done"}, status=200)
     else:
            add = Like.objects.create(user_id =request.user.id,  post_id = post_id, likes = False, unlikes = True )
            add.save()
-           return JsonResponse({"message": "done"}, status=404)
+           return JsonResponse({"message": "done"}, status=200)
 
 
 
@@ -109,14 +136,14 @@ def addComment(request):
     user=int(user)
 
     if not newComment :
-        return JsonResponse({  "error": "You should add content to your Comment." }, status=400)
+        return JsonResponse({  "error": "You should add content to your Comment." }, status=404)
     try:
        add = Coments.objects.create(post_id=post_id , comment=newComment,  user_id=user)
        add.save()
        return JsonResponse({"message": "Your post added successfully."}, status=200)
     except IntegrityError as e:
    
-        return JsonResponse({  "error": "Error Comment didn't add" }, status=400)
+        return JsonResponse({  "error": "Error Comment didn't add" }, status=404)
     
 @csrf_exempt
 def usersProfile(request,user_id):
@@ -140,16 +167,16 @@ def follow(request,user_id):
                 elif data.followStatus == True:
                     data.followStatus =False
                 data.save()
-                return JsonResponse({"message": "done"}, status=404)
+                return JsonResponse({"message": "done"}, status=200)
         else:
            add=Followrs.objects.create(user_id=user_id, userFollow_id=request.user.id,followStatus=True)
            add.save()
-           return JsonResponse({"message": "done"}, status=404)
+           return JsonResponse({"message": "done"}, status=200)
     except:
         pass
    
        
-    return JsonResponse({"error": "done"}, status=404)
+    return JsonResponse({"error": "can not follow"}, status=404)
     
     
 

@@ -1,25 +1,57 @@
-
-// members/static/myfirst.js:
 document.addEventListener("DOMContentLoaded", function() {
-  // Use buttons to toggle between views
-  document.querySelector("#network").addEventListener("click", () => get_post('Network'));
-  document.querySelector("#allPost").addEventListener("click", () => get_post('AllPost'));
-  document.querySelector("#following").addEventListener("click", () => get_post('Following'));
-  document .querySelector("#profile").addEventListener("click", () =>get_post('Profile'));  
-  document.querySelector("#posts-form").addEventListener("submit", (event) => {event.preventDefault(); sendPost();});
-  document.querySelectorAll('button').forEach(button => {
+  document.querySelectorAll('a').forEach(button => {
     button.onclick = function() {
         const section = this.dataset.section;
-        history.pushState({section: section}, "", `section${section}`);
-        showSection(section);
+        console.log(section)
+        history.pushState({section: section}, "", `${section}`);
+        get_post(section);
     };
+    // get_post('AllPost');
+    get_post(getPath());
 });
 
-  get_post('Network')
+document.querySelector("#posts-form").addEventListener("submit", (event) => {event.preventDefault(); sendPost();});
   var userid =document.querySelector("#userid")
 });
 
+window.onpopstate = function(event) {
+  get_post(event.state.section);
+ 
+}
 
+
+function get_post(title) {
+  document.querySelector("#userDatiles").style.display='none'
+  if (title =="Profile"){
+    let username=document.querySelector("#username") 
+    username=username.innerHTML
+    user=userid.value
+    usersProfile(user,username) 
+  }else{
+
+  document.querySelector("#page-title").innerHTML =title 
+  document.querySelector("title").innerHTML =title ;
+
+ fetch(`/posts/${title}`)
+ .then((response) => response.json())
+ .then((post) => {
+  if( post.error){
+    alert=document.querySelector("#alert")
+    alert.style.display = "block";
+    alert.innerHTML=`<p class="alert alert-warning>${post.error}</p>`
+  }
+  console.log("aaa",page_obj)
+  // let data = JSON.parse(post);
+  // console.log("s",post)
+  // viewAllPost(data);
+ 
+ })
+ .catch((error) => {
+  console.log("aaa")
+     console.log(error);
+ });
+  }
+}
 
 
 function sendPost() {
@@ -40,7 +72,8 @@ fetch("/addposts", {
       }else{
         alert.innerHTML=`<p class="alert alert-success">${result.message}</p>`
         document.querySelector("#newPost").value='';
-        get_post('Network')
+        // get_post('Network')
+        get_post(getPath());
       }
     }).catch((error) => {
       // print error
@@ -51,44 +84,6 @@ fetch("/addposts", {
 
 
 
-function get_post(title) {
-  // <div id="userDatiles" style="display:none"> </div>
-  document.querySelector("#userDatiles").style.display='none'
-  if (title =="Profile"){
-    let username=document.querySelector("#username") 
-    username=username.innerHTML
-    console.log(username,userid.value)
-    user=userid.value
-    usersProfile(user,username) 
-  }
-  else{
-  // Show compose view and hide other viewspage-titlepage-title
-  let titles=document.querySelector("#page-title") 
-  document.querySelector("title").innerHTML =title ;
-  titles.innerHTML=title
-  // fetch data for one mail
- fetch(`/posts/${title}`)
- .then((response) => response.json())
- .then((post) => {
-
-  if( post.error){
-    alert=document.querySelector("#alert")
-    alert.style.display = "block";
-    alert.innerHTML=`<p class="alert alert-warning>${post.error}</p>`
-  }
-
-  let data = JSON.parse(post);
-  viewAllPost(data);
- })
- .catch((error) => {
-     // print error
-     console.log(error);
- });
-  }
-
-
-}
-
 
 
 function updtueLike(post_id) {
@@ -98,13 +93,26 @@ function updtueLike(post_id) {
    .then((post) => {
 
   if( post.message){
-    get_post('Network');
+    // console.log("d",getPath())
+     get_post(getPath());
   }
  })
   .catch((error) => {
    // print error
     console.log(error);
 });
+}
+
+
+function getPath(){
+  const pathname = window.location.pathname;
+ myArray = pathname.split("/");
+ if (myArray[1] !=''){
+  return myArray[1] 
+ }else{
+  return 'Network'
+ }
+
 }
 
 function updtueUnLike(post_id) {
@@ -114,7 +122,7 @@ function updtueUnLike(post_id) {
    .then((post) => {
 
   if( post.message){
-    get_post('Network');
+    get_post(getPath());
   }
  })
   .catch((error) => {
@@ -136,7 +144,6 @@ if(comentview.style.display =='none'){
 
 
 function addComment (post_id){
-
 fetch("/addComment", {
   method: "POST",
   body: JSON.stringify({
@@ -157,7 +164,7 @@ if(result.error){
 }else{
   alert.innerHTML=`<p class="alert alert-success">${result.message}</p>`
   document.querySelector(`#newComment${post_id}`).value='';
-  get_post('Network')
+  get_post(getPath());
 }
 }).catch((error) => {
 // print error
@@ -201,7 +208,7 @@ if(result.error){
 }else{
   alert.innerHTML=`<p class="alert alert-success">${result.message}</p>`
   document.querySelector("#newPost").value='';
-  get_post('Network')
+  get_post(getPath());
 }
 }).catch((error) => {
 // print error
@@ -218,7 +225,6 @@ function usersProfile(user_id, user){
   userDatiles.innerHTML=''
   document.querySelector("title").innerHTML ='Profile:'+ user;
   titles.innerHTML=user + ' '+ 'Profile'  ;
-
   userDatiles.style.display='block'
   fetch(`/profile/${user_id}`)
   .then((response) => response.json())
@@ -250,7 +256,7 @@ function usersProfile(user_id, user){
      alert.style.display = "block";
      alert.innerHTML=`<p class="alert alert-warning>${post.error}</p>`
    }
- 
+  // console.log()
    viewAllPost(post.posts);
   })
   .catch((error) => {
@@ -261,7 +267,6 @@ function usersProfile(user_id, user){
  
 
 }
-
 
 
 function folow(user_id,user_name){
@@ -279,8 +284,7 @@ function folow(user_id,user_name){
   if( post.message){
     document.querySelector("#newPost_div").style.display='none';
     usersProfile(user_id,user_name)
-    
-    // get_post('Network');
+
   }
  })
   .catch((error) => {
@@ -311,7 +315,7 @@ data.forEach((item) => {
     <div class="w-100  ">
 
     <p  class=" border-bottom">
-     <span class="float-left"> Post py<a class=" bg-info" href="#" onclick="usersProfile( ${item.user_id} , '${item.user}' )"> ${item.user} </a></span> 
+     <span class="float-left"> Post py<a class=" btn btn-outline-info"  data-section="Profile"  onclick="usersProfile( ${item.user_id} , '${item.user}' )"> ${item.user} </a></span> 
      <span class="float-right"> ${item.created_at} </span>
      </p>
 
@@ -422,18 +426,3 @@ data.forEach((item) => {
 
 
 
-window.onpopstate = function(event) {
-  console.log(event.state.section);
-  showSection(event.state.section);
-}
-
-function showSection(section) {
-  
-  fetch(`/sections/${section}`)
-  .then(response => response.json())
-  .then(text => {
-      console.log(text);
-      document.querySelector('#content').innerHTML = text;
-  });
-
-}

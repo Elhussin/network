@@ -4,7 +4,7 @@ from django.db import IntegrityError
 from django.http import JsonResponse
 def get_iteams_datile(request,title):
   
-     data=[]
+     data=[] 
      if title=='Network'  or title== 'AllPost':
           data =Posts.objects.all().order_by('-created_at')
      if title== 'Following':
@@ -22,8 +22,9 @@ def get_iteams_datile(request,title):
      else:
         pass
      posts=postHnadel(request,data)
-     obj=json.dumps(posts, indent=4, sort_keys=True, default=str)
-     return obj
+  
+   #   obj=json.dumps(posts, indent=4, sort_keys=True, default=str)
+     return posts
    #  user userFollow
 def get_profile_datile(request,user_id):
    posts= Posts.objects.filter(user_id=user_id).order_by('-created_at')
@@ -43,9 +44,10 @@ def get_profile_datile(request,user_id):
      'followStatus':followStatus,
      'folowr_count':folowr_count,
      'folow_count':folow_count, }
-   # obj=json.dumps(data, indent=4, sort_keys=True, default=str)
-   
+
    return data
+
+
 def postHnadel(request,data):
     dat_post=[] 
     for post in data:

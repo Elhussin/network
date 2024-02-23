@@ -54,25 +54,10 @@
      </div>
 
 
-    
-    <div class="sideright">
-      <div class="fakeimg" style="height:200px;">Image</div>
-    </div>
 
 
-  </div>
-  {% comment %} <nav aria-label="Page navigation example">
-    <ul class="pagination">
-      <li class="page-item"><a class="page-link" href="#">Previous</a></li>
-      <li class="page-item"><a class="page-link" href="#">1</a></li>
-      <li class="page-item"><a class="page-link" href="#">2</a></li>
-      <li class="page-item"><a class="page-link" href="#">3</a></li>
-      <li class="page-item"><a class="page-link" href="#">Next</a></li>
-    </ul>
-  </nav> {% endcomment %}
 
-{% comment %} 
-  {% for contact in page_obj %}
+     {% for contact in page_obj %}
     {# Each "contact" is a Contact model object. #}
     {{ contact.full_name|upper }}<br>
     ...
@@ -94,43 +79,12 @@
             <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
         {% endif %}
     </span>
-</div> {% endcomment %}
+</div>
 
 
-{% if items_page %}
-    {% for item in items_page %}
-        <div class="card mb-1">
-            <div class="card-body">
-                <p class="card-title">{{ item.title }}</p>
-            </div>
-        </div>
-    {% endfor %}
-
-    {% if items_page.has_other_pages %}
-        <div class="btn-group" role="group" aria-label="Item pagination">
-            {% if items_page.has_previous %}
-                <a href="?page={{ items_page.previous_page_number }}" class="btn btn-outline-primary">«</a>
-            {% endif %}
-            {% for page_number in items_page.paginator.page_range %}
-                {% if items_page.number == page_number %}
-                    <button class="btn btn-outline-primary active">
-                        <span>{{ page_number }} <span class="sr-only">(current)</span></span>
-                    </button>
-                {% else %}
-                    <a href="?page={{ page_number }}" class="btn btn-outline-primary">{{ page_number }}</a>
-                {% endif %}
-            {% endfor %}
-            {% if items_page.has_next %}
-                <a href="?page={{ items_page.next_page_number }}" class="btn btn-outline-primary">»</a>
-            {% endif %}
-        </div>
-    {% endif %}
-{% else %}
-    <p>No items found.</p>
-{% endif %}
 {% endblock %}
 
 {% block script %}
 
-<script src="{% static 'network/js.js' %}"> </script>
+<script  src="{% static 'network/js.js' %}"> </script>
 {% endblock %}
