@@ -2,14 +2,18 @@ import json
 from .models import User,    Followrs , Like ,Coments ,Posts
 from django.db import IntegrityError
 from django.http import JsonResponse
-def get_iteams_datile(request,title):
-  
+#  get all Posts
+def  get_iteams_datile(title,user_id) :  
      data=[] 
-     if title=='Network'  or title== 'AllPost':
+     if title== 'AllPost':
           data =Posts.objects.all().order_by('-created_at')
+     if title=='Network'  :
+         # data =Posts.objects.count() 
+         data =Posts.objects.all().order_by('-created_at')[:3]
+ 
      if title== 'Following':
           try: 
-             folow=Followrs.objects.filter(userFollow=request.user,followStatus=True)
+             folow=Followrs.objects.filter(userFollow=user_id,followStatus=True)
              follower_post=[]
              for iteam in folow:   
                 f_post = Posts.objects.filter(user_id=iteam.user.id)
@@ -21,41 +25,29 @@ def get_iteams_datile(request,title):
                pass
      else:
         pass
-     posts=postHnadel(request,data)
-  
-   #   obj=json.dumps(posts, indent=4, sort_keys=True, default=str)
-     return posts
+     posts=postHnadel(user_id,data)
+     data={"posts": posts}
+     return data
    #  user userFollow
-def get_profile_datile(request,user_id):
-   posts= Posts.objects.filter(user_id=user_id).order_by('-created_at')
-   user_posts=postHnadel(request,posts)
-   folowr=Followrs.objects.filter(user_id=user_id, followStatus=True)
-   folow=Followrs.objects.filter(userFollow_id=user_id,followStatus=True)
    
-   followStatus=False
-   for i in folowr:
-      if request.user.id == i.userFollow_id :
-         followStatus=i.followStatus
-      
-   folow_count=folow.count()
-   folowr_count= folowr.count()
-    
-   data={"posts": user_posts,
-     'followStatus':followStatus,
-     'folowr_count':folowr_count,
-     'folow_count':folow_count, }
+   #  get user brofile 
+
+# get broflie for selected user 
+def get_profile_datile(activeUser,user_id):
+   posts= Posts.objects.filter(user_id=user_id).order_by('-created_at')
+   user_posts=postHnadel(activeUser,posts)
+   data={"posts": user_posts, }
 
    return data
 
-
-def postHnadel(request,data):
+#  handel data then return it in list 
+def postHnadel(user_id,data):
     dat_post=[] 
     for post in data:
              comments= Coments.objects.filter(post=post).order_by('-created_at')
              like= Like.objects.filter(post=post).order_by('-created_at')
              allcomment=[]
              alllike=[]
-    
              commentcount=0
              unlikecount=0
              likecount=0
@@ -65,7 +57,6 @@ def postHnadel(request,data):
              onepost['post_id']=post.id
              onepost['created_at']=post.created_at.strftime("%b %d %Y, %I:%M %p")
              onepost['post']=post.post
-
              for comment in comments :
                 onecomment={}
                 onecomment['comment']=comment.comment
@@ -79,7 +70,7 @@ def postHnadel(request,data):
 
              for i in like :
 
-                if i.user.id == request.user.id:
+                if i.user.id == user_id:
                    onelike={}
 
                    if i.likes:
@@ -106,6 +97,8 @@ def postHnadel(request,data):
              onepost['postLike']=alllike
             
              dat_post.append(onepost)  
+   #  resualts={}
+   #  resualts['resualt']=dat_post
     return dat_post
 
 

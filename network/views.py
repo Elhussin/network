@@ -1,210 +1,127 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect,Http404
-from django.shortcuts import render ,redirect
+from django.http import HttpResponseRedirect
+from django.shortcuts import render 
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from .models import User
 from django.http import JsonResponse
 import json
 from .models import User,Posts,Like,Coments,Followrs
-from .helper import  get_iteams_datile,get_profile_datile
-
-from .forms import  profileForm
+from .helper import  get_iteams_datile,get_profile_datile 
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.template import RequestContext
-# from django.core.paginator import Paginator, EmptyPage
-# from django.http import JsonResponse
-
-
-
-
+from django.core.paginator import Paginator
+import json
 
 
 
 def index(request):
     return render(request, "network/index.html")
-  
-    
-
-
-@csrf_exempt
-def view_post(request,title):
-    if title:
-        data=get_iteams_datile(request,title)
-    
-        data_list=json.dumps(data, indent=4, sort_keys=True, default=str)
-        return HttpResponse(data_list)
-    else:
-        raise Http404("No such section")
-    
-
-
-
-# if path not avilbeal will return to  inde
-def hendelPAth(request, path):
-
-      return HttpResponseRedirect(reverse("index"))
-
-
-@login_required
-def add_like(request,post_id):    
-
-    data=[]
-    try:
-        data= Like.objects.get(user=request.user.id, post=post_id)
-    except:
-        pass
-    if data :
-                if data.likes == True:
-                    data.likes =False
-                elif data.likes == False:
-                   data.likes = True
-                   data.unlikes= False
-                data.save()
-                return JsonResponse({"message": "done"}, status=200)
-                # return HttpResponse(request.META.get('HTTP_REFERER'))
-         
-    else:
-           add = Like.objects.create(user_id =request.user.id,  post_id = post_id, likes = True, unlikes = False )
-           add.save()
-           return JsonResponse({"message": "done"}, status=200)
-        #    return HttpResponse(request.META.get('HTTP_REFERER'))
-
-@login_required
-def un_like(request,post_id):    
-    data=[]
-    try:
-        data= Like.objects.get(user=request.user.id, post=post_id)
-    except:
-        pass
-    if data :
-                if data.unlikes== False:
-                    data.likes =False
-                    data.unlikes= True
-                elif data.unlikes == True:
-                      data.unlikes =False
-                data.save()
-                return JsonResponse({"message": "done"}, status=200)
-    else:
-           add = Like.objects.create(user_id =request.user.id,  post_id = post_id, likes = False, unlikes = True )
-           add.save()
-           return JsonResponse({"message": "done"}, status=200)
-
 
 
 @csrf_exempt
 @login_required
-def addComment(request):
+def usersProfile(request):
+    page =request.GET.get('page', 1)
+    brofileId =request.GET.get('brofileId', 1)
+    activeUser=request.user.id
+    folowr=Followrs.objects.filter(user_id=brofileId, followStatus=True)
+    folow=Followrs.objects.filter(userFollow_id=brofileId,followStatus=True)
+ 
 
-    if request.method != "POST":
-        return JsonResponse({"error": "Not Allow"}, status=400)
-        
-    data = json.loads(request.body)
-    newComment=data.get("newComment")
-   
-    post_id=data.get("post_id")
-    user=data.get("user")
-    user=int(user)
+    followStatus=False
+    for i in folowr:
+      if activeUser == i.userFollow_id :
+         followStatus=i.followStatus
+      
+      
+    folow_count=folow.count()
+    folowr_count= folowr.count()
 
-    if not newComment :
-        return JsonResponse({  "error": "You should add content to your Comment." }, status=404)
-    try:
-       add = Coments.objects.create(post_id=post_id , comment=newComment,  user_id=user)
-       add.save()
-       return JsonResponse({"message": "Your post added successfully."}, status=200)
-    except IntegrityError as e:
-   
-        return JsonResponse({  "error": "Error Comment didn't add" }, status=404)
     
-@csrf_exempt
-def usersProfile(request,user_id):
-    
-    data=get_profile_datile(request,user_id)
+    paginated_data=get_profile_datile(activeUser,brofileId)
+    data = paginate_data(paginated_data['posts'], page, 10) 
+    data['followStatus']=followStatus
+    data['folowr_count']=folowr_count
+    data['folow_count']=folow_count
+
     obj=json.dumps(data, indent=4, sort_keys=True, default=str)
-    print('here')
     return  JsonResponse(obj, safe=False)
 
   
 @csrf_exempt
 @login_required
-def follow(request,user_id):
-    
+def follow(request,user_id):    
     data=[]
+    # check if this iteam add like from user our not 
+    print(user_id)
     try:
         data=Followrs.objects.get(user_id=user_id, userFollow_id=request.user.id)
-        if data :
-                if data.followStatus== False:
-                    data.followStatus= True
-                elif data.followStatus == True:
-                    data.followStatus =False
-                data.save()
-                return JsonResponse({"message": "done"}, status=200)
-        else:
-           add=Followrs.objects.create(user_id=user_id, userFollow_id=request.user.id,followStatus=True)
-           add.save()
-           return JsonResponse({"message": "done"}, status=200)
     except:
         pass
-   
-       
-    return JsonResponse({"error": "can not follow"}, status=404)
+    # if add befor will change status 
+    if data :
+        if data.followStatus== False:
+            data.followStatus= True
+            data.save()
+            return JsonResponse({"message": "Update folow to true"}, status=200)
+        elif data.followStatus == True:
+            data.followStatus =False
+            data.save()
+            return JsonResponse({"message": "Update folow to false"}, status=200)
     
-    
+    #  if no addd befor will add  new status 
+    else:
+           add=Followrs.objects.create(user_id=user_id, userFollow_id=request.user.id, followStatus = True)
+         
+           add.save()
+           return JsonResponse({"message": "done"}, status=200)
 
-@csrf_exempt
-@login_required
-def add_post(request):
-    if request.method == "POST":
-        
-       data = json.loads(request.body)
-       newPost=data.get("newPost")
-       if not newPost :
-           return JsonResponse({    "error": "You should add content to your post."   }, status=400)
 
-       add = Posts.objects.create(post=newPost,  user_id = request.user.id)
-       add.save()
-    # return HttpResponseRedirect(reverse("view_post"))
-       return JsonResponse({"message": "Your post added successfully."}, status=200)
-    if request.method == "PUT":
-        
-        data = json.loads(request.body)
-        updatePost=data.get("updatePost")
-        post_id=data.get("post_id")
-        if not updatePost :
-           return JsonResponse({    "error": "You should add content to your Post."   }, status=400)
-        try:
-            post_data= Posts.objects.get(user_id=request.user.id, pk=post_id)
-        except IntegrityError as e:
 
-            return JsonResponse({    "error": "This post Not Allow to edit."   }, status=400)
 
-        if post_data :
-            post_data.post=updatePost
-            
-            post_data.save()
-            return JsonResponse({"message": "Your post Updated successfully."}, status=200)
+
+def paginate_data(data, page_number, items_per_page):
+    """
+    Takes a list of data, page number, and items per page, and returns
+    a paginated dictionary.
+    """
+    paginator = Paginator(data, items_per_page)
+    page_obj = paginator.get_page(page_number)
+    return{
+        'has_previous': page_obj.has_previous(),
+        'has_next': page_obj.has_next(),
+        'data': list(page_obj),
+        'total_items': paginator.count,
+    }
+
+
+
   
-    return JsonResponse({"error": "Not Allow."}, status=400)
-      
-
-# @login_required 
-def addBio(request):
-    if request.method =='Post':
-        form= profileForm(request.Post,request.File)
-        if form.is_valid():
-            form.save()
-            return redirect('success_url')
-    else :
-        form= profileForm()
-        return render(request,'network/bio.html',{'form':form})
-        
+  
+def view_post(request):
+    """
+    Retrieves posts and paginates them based on query parameters.
+    # """
+    page =request.GET.get('page', 1)
+    title =request.GET.get('title', 1)
+    data=get_iteams_datile(title,request.user.id)
+    paginated_data = paginate_data(data['posts'], page, 10)    
+    obj=json.dumps(paginated_data, indent=4, sort_keys=True, default=str)  
+    return  JsonResponse(obj, safe=False)
+ 
 
 
+def hendelPAth(request, path):
+    if path == 'admin':
+         return HttpResponseRedirect(reverse("admin"))  
+    #  redirect to index for non exist path
+    else:
+    # pass
+         return HttpResponseRedirect(reverse("index"))  
 
-
+#  log in 
 def login_view(request):
     if request.method == "POST":
 
@@ -224,13 +141,13 @@ def login_view(request):
     else:
         return render(request, "network/login.html")
 
-
+#  log out 
 def logout_view(request):
     logout(request)
     return HttpResponseRedirect(reverse("index"))
 
 
-
+# register 
 def register(request):
     if request.method == "POST":
         username = request.POST["username"]
@@ -259,43 +176,123 @@ def register(request):
 
 
 
+#  add like 
+@login_required
+def add_like(request,post_id):    
 
-
-
-
-
-def paginated_json_view(request,page):
-    data=get_iteams_datile(request,'AllPost')
-    items_per_page = 10
-    # Paginate the data
-    paginator = Paginator(data, items_per_page)
-    page_number=page
+    data=[]
+    # check if this iteam add like from user our not 
     try:
-        # Get the specified page from the paginator
-        page = paginator.page(page_number)
-        objects = page.object_list
+        data= Like.objects.get(user=request.user.id, post=post_id)
+    except:
+        pass
+    # if add befor will change status 
+    if data :
+                if data.likes == True:
+                    data.likes =False
 
-        response_data = {
-            'count': paginator.count,
-            'num_pages': paginator.num_pages,
-            'page_number': page_number,
-            'data': objects,
-        }
-        response_datas=json.dumps(response_data, indent=4, sort_keys=True, default=str)
-        # data_list=json.dumps(serialized_data, indent=4, sort_keys=True, default=str)
-        # return JsonResponse(data_list)
-        return HttpResponse(response_datas)
-    except EmptyPage:
-        # If the requested page is out of range, return an empty array
-        return JsonResponse({'error': 'Page out of range'}, status=404)
+                elif data.likes == False:
+                   data.likes = True
+                   data.unlikes= False
+                data.save()
+                return JsonResponse({"message": "done"}, status=200)        
+    #  if no addd befor will add  new status 
+    else:
+           add = Like.objects.create(user_id =request.user.id,  post_id = post_id, likes = True, unlikes = False )
+           add.save()
+           return JsonResponse({"message": "done"}, status=200)
+       
 
 
-# def view_post2(request,title):
-#     if title:
-#         data=get_iteams_datile(request,title)
-    
-#         data_list=json.dumps(data, indent=4, sort_keys=True, default=str)
-#         return HttpResponse(data_list)
-#     else:
-#         raise Http404("No such section")
-    
+#un like 
+@login_required
+def un_like(request,post_id):  
+
+     # check if this iteam add like from user our not   
+    data=[]
+    try:
+        data= Like.objects.get(user=request.user.id, post=post_id)
+    except:
+        pass
+        # if add befor will change status 
+    if data :
+                if data.unlikes== False:
+                    data.likes =False
+                    data.unlikes= True
+                elif data.unlikes == True:
+                      data.unlikes =False
+                data.save()
+                return JsonResponse({"message": "done"}, status=200)
+      #  if no addd befor will add  new status 
+    else:
+           add = Like.objects.create(user_id =request.user.id,  post_id = post_id, likes = False, unlikes = True )
+           add.save()
+           return JsonResponse({"message": "done"}, status=200)
+
+
+# add comment 
+@csrf_exempt
+@login_required
+def addComment(request):
+    #  to cnfiarm request py bost
+    if request.method != "POST":
+        return JsonResponse({"error": "Not Allow"}, status=400)
+   # get form data 
+    data = json.loads(request.body)
+    newComment=data.get("newComment")
+    post_id=data.get("post_id")
+    user=data.get("user")
+    #  if comment nell  will return erro mesage 
+    if not newComment :
+        return JsonResponse({  "error": "You should add content to your Comment." }, status=404)
+    #  insert comment to comment table
+    try:
+       add = Coments.objects.create(post_id=post_id , comment=newComment,  user_id=user)
+       add.save()
+       return JsonResponse({"message": "Your post added successfully."}, status=200)
+    # returen error message if not edd 
+    except IntegrityError as e:
+   
+        return JsonResponse({  "error": "Error Comment didn't add" }, status=404)
+
+
+# add post 
+@csrf_exempt
+@login_required
+def add_post(request):
+    #  poust metho to add new posts
+    if request.method == "POST":
+        # get form data 
+       data = json.loads(request.body)
+       newPost=data.get("newPost")
+    #     error mesage fou null form 
+       if not newPost :
+           return JsonResponse({    "error": "You should add content to your post."   }, status=400)
+    # insert dat to post table
+       add = Posts.objects.create(post=newPost,  user_id = request.user.id)
+       add.save()
+    # return HttpResponseRedirect(reverse("view_post"))
+       return JsonResponse({"message": "Your post added successfully."}, status=200)
+    #  put method to ubdta post 
+    if request.method == "PUT":
+        # get form data    
+        data = json.loads(request.body)
+        updatePost=data.get("updatePost")
+        post_id=data.get("post_id")
+        #     error mesage fou null form 
+        if not updatePost :
+           return JsonResponse({    "error": "You should add content to your Post."   }, status=400)
+    #     check if this post exits
+        try:
+            post_data= Posts.objects.get(user_id=request.user.id, pk=post_id)
+        except IntegrityError as e:
+            return JsonResponse({    "error": "This post Not Allow to edit."   }, status=400)
+        # updat post with new data 
+        if post_data :
+            post_data.post=updatePost
+            
+            post_data.save()
+            return JsonResponse({"message": "Your post Updated successfully."}, status=200)
+    # erroe mesage 
+    return JsonResponse({"error": "Not Allow."}, status=400)
+      
