@@ -1,0 +1,84 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+       <meta charset="UTF-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}Social Network{% endblock %}</title>
+        <link rel="shortcut icon" href=" {% static '/network/uploud/icon.png' %}" type="image/x-icon">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <link href="{% static 'network/styles.css' %}" rel="stylesheet">
+        {% block script %} {% endblock %}
+    </head>
+    <body>
+       {% comment %} nav bar  {% endcomment %}
+                       
+                    </li> <nav class="navbar navbar-expand-lg navbar-light bg-light mw-100">
+            <a class="navbar-brand btn" data-section="Network"  id="network">Network</a>
+            <div> 
+              <ul class="navbar-nav mr-auto"> 
+                {% if user.is_authenticated %}
+                    <li class="nav-item" id="profile">
+                        <a class="nav-link btn" data-section="Profile" ><strong id="username">{{ user.username }}</strong></a>
+                    </li>
+                {% endif %}
+                <li class="nav-item" id="AllPost">
+                  {% comment %} <a class="nav-link" href="{% url 'index' %}">All Posts</a> {% endcomment %}
+                  <a class="nav-link btn"  data-section="AllPost" >All Posts</a> 
+                </li>
+        
+                {% if user.is_authenticated %}
+                    <li class="nav-item" id="following" datas-section="Following">
+                        <a class="nav-link btn" data-section="Following"  >Following</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'logout' %}">Log Out</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">Log In</a>
+                    </li>
+                    <li class="nav-item">
+        
+                {% endif %}
+              </ul>
+            </div>
+          </nav>
+
+
+        {% comment %} end of nabar {% endcomment %}
+
+        {% comment %} page header  {% endcomment %}
+        <div class="header">
+            <h1 id="page-title"></h1>
+        </div>
+        {% comment %} row  area  have three psection - left sid - main - rightside  {% endcomment %}
+        <div class="row">
+           <div class="side"> 
+            <div class="fakeimg" style="height:200px;" >
+              <img class="w-100 h-100" id="brofile-img" src="{% static '/network/uploud/logo.jpg' %}"/>
+            </div>
+             {% block side %}
+             {% endblock %}
+           </div>
+           <div class="main">
+             {% block body %}
+             {% endblock %}
+             {% if not user.is_authenticated %}
+             <p class="alert alert-info"><span> <a  href="{% url 'login' %}">Login</a> </span> <span>  or <a href="{% url 'register' %}">Register</a> </span> <span> to Be Updated with all posts </span></p>
+             {% endif %}
+           </div>
+
+        <div class="sideright">
+            {% block sideright %}
+            {% endblock %}
+        </div>
+       </div>
+{% comment %} end of row area {% endcomment %}
+  
+
+     {% comment %} footer area {% endcomment %}
+     <footer class="footer">  footer datiles </footer> 
+    </body>
+</html>

@@ -1,0 +1,60 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+ {% comment %} left side bar  {% endcomment %}
+{% block side %}
+        
+        <div class="fakeimg" style="height:200px;"  >
+          <div id="userDatiles" > </div> 
+        </div>
+      
+      
+    
+{% endblock %}
+{% comment %} end left side  {% endcomment %}
+
+{% block body %}
+
+
+  {% comment %} alert netfection {% endcomment %}
+   <div id="alert" class="display-non"> </div>
+
+       {% comment %} new post {% endcomment %}
+       
+       <div id="newPost_div"  class="display-non">
+   {% if user.is_authenticated  %}
+   <input type="number" value="{{request.user.id}}"  id="userid" hidden > 
+  
+     <form id="posts-form">  
+       <div class="form-group">
+         <label for="newPost"> New Post </label>
+         <textarea class="form-control" id="newPost" rows="3"></textarea>
+         <input class="btn btn-primary m-1 " type="submit" id="addPost" value="Post">
+       </div>
+     </form>
+  
+   {% else %}
+   <input type="text " value="no"  id="userid" hidden>
+   {% endif %}
+  </div>
+        {% comment %} end new post {% endcomment %}   
+        
+       {% comment %} view post {% endcomment %}
+       <div id="view-post" class="mainIteam">
+
+       </div>
+       
+       <nav aria-label="Page navigation example"   >
+        <ul class="pagination m-auto" id="pagination-container">
+
+        </ul>
+      </nav>
+       {% comment %}end view all post here {% endcomment %}
+
+{% endblock %}
+
+
+
+{% block script %}
+<script  src="{% static 'network/js.js' %}"> </script>
+{% endblock %}
