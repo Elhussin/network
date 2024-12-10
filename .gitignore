@@ -1,0 +1,37 @@
+# Python cache files
+__pycache__/
+
+# Virtual environment
+env/
+
+# Custom folders (verify their purpose)
+path/
+archif/
+
+# Media uploads
+# media/
+
+# Environment variables
+.env
+
+# Django migrations
+*/migrations/
+
+# IDE and tools settings
+.git/
+.idea/
+
+# Docker files
+docker-compose
+Dockerfile
+
+# Temporary or alternate settings
+settings1.py
+
+# Log files
+debug.log
+error.log
+
+# sqlite
+# db.sqlite3
+git check-ignore -v <file>
